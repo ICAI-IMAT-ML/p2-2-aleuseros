@@ -53,22 +53,17 @@ class knn:
         """
         #We first check that we have valid arguments, in case we dont, we simply send out a message and force the return
         if len(X_train) != len(y_train):
-            print ("Training sets do not have the same number of rows")
-            return
-        elif k<= 0:
-            print ("k must be a positive variable")
-            return
-        elif p<= 0:
-            print ("p must be a positive integer")
-            return
-        
-        #If everything goes right we execute the function normally
+            raise ValueError("Training sets do not have the same number of rows")
+        if k <= 0:
+            raise ValueError("k must be a positive integer")
+        if p <= 0:
+            raise ValueError("p must be a positive integer")
         
         self.k = k
         self.p = p
         self.x_train = X_train
         self.y_train = y_train
-    
+        
     def predict(self, X: np.ndarray)->np.ndarray:
         #We first create the list that stores the predictions
         predictions = []
@@ -151,7 +146,6 @@ class knn:
 
         Returns:
             np.ndarray: row indices from the k nearest neighbors.
-
         Hint:
             You might want to check the np.argsort function.
         """
@@ -429,31 +423,30 @@ def plot_roc_curve(y_true, y_probs, positive_label):
     Plot the Receiver Operating Characteristic (ROC) curve.
 
     The ROC curve is a graphical representation of the diagnostic ability of a binary
-    classifier system as its discrimination threshold is varied. It plots the True Positive
-    Rate (true_positiveR) against the False Positive Rate (FPR) at various threshold settings.
+    classifier as its discrimination threshold is varied. It plots the True Positive
+    Rate (TPR) against the False Positive Rate (FPR) at various threshold settings.
 
     Args:
         y_true (array-like): True labels of the data. Can be binary or categorical.
         y_probs (array-like): Predicted probabilities for the positive class. 
-                            Expected values are in the range [0, 1].
+                              Expected values are in the range [0, 1].
         positive_label (int or str): The label considered as the positive class.
-                                    Used to map categorical labels to binary outcomes.
+                                     Used to map categorical labels to binary outcomes.
 
     Returns:
         dict: A dictionary containing the following:
             - "fpr": Array of False Positive Rates for each threshold.
-            - "true_positiver": Array of True Positive Rates for each threshold.
-
+            - "tpr": Array of True Positive Rates for each threshold.
     """
-    # Mapear etiquetas a 0 y 1
+    # Map labels to 0 and 1
     y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
     
-    # Obtener todos los umbrales posibles ordenados
+    # Get sorted unique thresholds
     thresholds = np.sort(np.unique(y_probs))
     fpr = []
     tpr = []
     
-    # Calcular true_positiveR y FPR para cada umbral
+    # Calculate TPR and FPR for each threshold
     for thresh in thresholds:
         y_pred = (y_probs >= thresh).astype(int)
         true_positive = np.sum((y_true_mapped == 1) & (y_pred == 1))
@@ -461,24 +454,24 @@ def plot_roc_curve(y_true, y_probs, positive_label):
         false_positive = np.sum((y_true_mapped == 0) & (y_pred == 1))
         false_negative = np.sum((y_true_mapped == 1) & (y_pred == 0))
         
-        true_positiver_val = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0
+        tpr_val = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0
         fpr_val = false_positive / (false_positive + true_negative) if (false_positive + true_negative) > 0 else 0
         
-        tpr.append(true_positiver_val)
+        tpr.append(tpr_val)
         fpr.append(fpr_val)
     
-    # Incluir los extremos 0 y 1 para una curva completa
+    # Include the extremes 0 and 1 to complete the curve
     fpr = [0] + fpr + [1]
     tpr = [0] + tpr + [1]
     
     plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, marker='o', label='Curva ROC')
-    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Línea de azar')
-    plt.xlabel('Tasa de Falsos Positivos (FPR)')
-    plt.ylabel('Tasa de Verdaderos Positivos (true_positiveR)')
-    plt.title('Curva ROC')
+    plt.plot(fpr, tpr, marker='o', label='ROC Curve')
+    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random classifier')
+    plt.xlabel('False Positive Rate (FPR)')
+    plt.ylabel('True Positive Rate (TPR)')
+    plt.title('ROC Curve')
     plt.legend()
     plt.show()
     
-    
-    return {"fpr": np.array(fpr), "true_positiver": np.array(tpr)}
+    return {"fpr": np.array(fpr), "tpr": np.array(tpr)}
+
