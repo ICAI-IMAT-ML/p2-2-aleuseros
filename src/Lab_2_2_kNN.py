@@ -53,12 +53,9 @@ class knn:
         """
         #We first check that we have valid arguments, in case we dont, we simply send out a message and force the return
         if len(X_train) != len(y_train):
-            raise ValueError("Training sets do not have the same number of rows")
-        if k <= 0:
-            raise ValueError("k must be a positive integer")
-        if p <= 0:
-            raise ValueError("p must be a positive integer")
-        
+            raise ValueError("Length of X_train and y_train must be equal.")
+        if k <= 0 or p <= 0:
+            raise ValueError("k and p must be positive integers.")
         self.k = k
         self.p = p
         self.x_train = X_train
@@ -438,39 +435,33 @@ def plot_roc_curve(y_true, y_probs, positive_label):
             - "fpr": Array of False Positive Rates for each threshold.
             - "tpr": Array of True Positive Rates for each threshold.
     """
-    # Map labels to 0 and 1
     y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
-    
-    # Get sorted unique thresholds
-    thresholds = np.sort(np.unique(y_probs))
+
+    thresholds = np.linspace(0,1,11)
+
     fpr = []
     tpr = []
-    
-    # Calculate TPR and FPR for each threshold
-    for thresh in thresholds:
-        y_pred = (y_probs >= thresh).astype(int)
-        true_positive = np.sum((y_true_mapped == 1) & (y_pred == 1))
-        true_negative = np.sum((y_true_mapped == 0) & (y_pred == 0))
-        false_positive = np.sum((y_true_mapped == 0) & (y_pred == 1))
-        false_negative = np.sum((y_true_mapped == 1) & (y_pred == 0))
-        
-        tpr_val = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0
-        fpr_val = false_positive / (false_positive + true_negative) if (false_positive + true_negative) > 0 else 0
-        
-        tpr.append(tpr_val)
-        fpr.append(fpr_val)
-    
-    # Include the extremes 0 and 1 to complete the curve
-    fpr = [0] + fpr + [1]
-    tpr = [0] + tpr + [1]
-    
+
+    for threshold in thresholds:
+        y_pred = (y_probs >= threshold).astype(int)
+
+        tp = np.sum((y_pred == 1) & (y_true_mapped == 1))
+        fp = np.sum((y_pred == 1) & (y_true_mapped == 0))
+        tn = np.sum((y_pred == 0) & (y_true_mapped == 0))
+        fn = np.sum((y_pred == 0) & (y_true_mapped == 1))
+
+        tpr.append(tp / (tp + fn) if tp + fn > 0 else 0)  
+        fpr.append(fp / (fp + tn) if fp + tn > 0 else 0)
+
+    fpr = np.array(fpr)
+    tpr = np.array(tpr)
+
     plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, marker='o', label='ROC Curve')
-    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random classifier')
-    plt.xlabel('False Positive Rate (FPR)')
-    plt.ylabel('True Positive Rate (TPR)')
-    plt.title('ROC Curve')
-    plt.legend()
+    plt.plot(fpr, tpr, color='blue', lw=2, label='ROC curve')
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--') 
+    plt.title('ROC')
+    plt.legend(loc='upper right')
+    plt.grid(True)
     plt.show()
     
     return {"fpr": np.array(fpr), "tpr": np.array(tpr)}
